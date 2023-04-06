@@ -1,5 +1,7 @@
 import pygame
 import sys
+
+from computer_player import ComputerPlayer
 from grid import Grid
 from constants import *
 from map_selection_screen import MapSelectionScreen
@@ -34,6 +36,8 @@ def main():
     map_selection_screen = MapSelectionScreen()
     selected_map = None
 
+    computer_player = ComputerPlayer(grid)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -50,7 +54,8 @@ def main():
 
                 # Check if the play button is clicked
                 if play_button.is_clicked(x, y):
-                    print("User's selected path:", grid.path)  # Print the user's selected path
+                    computer_player.path.pop()
+                    print("Computer's selected path:", computer_player.path)  # Print the computer's selected path
                     show_lines = False
                     grid.grid = [[0 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
                     play_mode = True
@@ -66,6 +71,9 @@ def main():
                         grid.grid[cell_y][cell_x] = 1
                         grid.path.append((cell_x, cell_y))
                         grid.firedBullets.append(False)
+
+                        computer_player.choose_random_move()
+
                     elif grid.path and (cell_x, cell_y) == grid.path[-1]:
                         grid.grid[cell_y][cell_x] = 0
                         grid.path.pop()
@@ -91,9 +99,9 @@ def main():
 
                 if direction:
                     if \
-                        play_mode and \
-                        play_index > 0 and \
-                        grid.firedBullets[play_index - 1] is False:
+                            play_mode and \
+                                    play_index > 0 and \
+                                    grid.firedBullets[play_index - 1] is False:
                         grid.shoot_bullet(direction, grid.path[play_index - 1], play_index)
                     elif not play_mode:
                         grid.shoot_bullet(direction)
@@ -118,7 +126,7 @@ def main():
                 play_timer = pygame.time.get_ticks()
                 play_index += 1
             show_lines = False
-            grid. draw(screen, show_lines, play_index - 1)
+            grid.draw(screen, show_lines, play_index - 1)
             clock.tick(10)
         else:
             # Update the screen
