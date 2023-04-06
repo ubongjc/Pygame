@@ -1,0 +1,10 @@
+# Constants
+GRID_SIZE = 10
+CELL_SIZE = 60
+SCREEN_SIZE = GRID_SIZE * CELL_SIZE
+
+# Colors
+WHITE = (255, 255, 255)
+GREY = (200, 200, 200)
+RED = (255, 0, 0)
+BLACK = (0, 0, 0)
