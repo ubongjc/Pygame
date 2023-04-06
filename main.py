@@ -55,6 +55,15 @@ def main():
                 # Check if the play button is clicked
                 if play_button.is_clicked(x, y):
                     computer_player.path.pop()
+
+                    user_grid_len = len(grid.path)
+                    computer_grid_len = len(computer_player.path)
+
+                    if user_grid_len > computer_grid_len:
+                        diff_len = user_grid_len - computer_grid_len
+                        for i in range(diff_len):
+                            computer_player.choose_random_move()
+
                     print("Computer's selected path:", computer_player.path)  # Print the computer's selected path
                     show_lines = False
                     grid.grid = [[0 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
@@ -73,6 +82,13 @@ def main():
                         grid.firedBullets.append(False)
 
                         computer_player.choose_random_move()
+                        if computer_player.rollback_to_validity_if_necessary():
+                            user_grid_len = len(grid.path)
+                            computer_grid_len = len(computer_player.path)
+                            if user_grid_len > computer_grid_len:
+                                diff_len = user_grid_len - computer_grid_len
+                                for i in range(diff_len):
+                                    computer_player.choose_random_move()
 
                     elif grid.path and (cell_x, cell_y) == grid.path[-1]:
                         grid.grid[cell_y][cell_x] = 0
@@ -126,7 +142,7 @@ def main():
                 play_timer = pygame.time.get_ticks()
                 play_index += 1
             show_lines = False
-            grid.draw(screen, show_lines, play_index - 1)
+            grid.draw(screen, show_lines, play_index - 1, computer_player.path)
             clock.tick(10)
         else:
             # Update the screen

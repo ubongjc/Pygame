@@ -11,12 +11,14 @@ class Grid:
         self.firedBullets = []
         self.bullet_start_indices = []
 
-    def draw(self, surface, show_lines=True, current_path_index=None):
+    def draw(self, surface, show_lines=True, current_path_index=None, computer_path=None):
         surface.fill(WHITE)
         for y in range(self.size):
             for x in range(self.size):
                 if current_path_index is not None and (x, y) == self.path[current_path_index]:
                     color = RED
+                elif computer_path is not None and (x, y) in computer_path:
+                    color = (0, 0, 255)  # Blue color
                 elif self.grid[y][x] == 1:
                     if (x, y) == self.path[-1]:
                         color = (136, 8, 8)  # Slightly different shade of red
