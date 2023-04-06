@@ -1,3 +1,4 @@
+import random
 import pygame
 import sys
 
@@ -19,7 +20,7 @@ def main():
     pygame.display.set_caption("Pygame Grid Game")
     clock = pygame.time.Clock()
     BULLET_UPDATE_EVENT = pygame.USEREVENT + 1
-    pygame.time.set_timer(BULLET_UPDATE_EVENT, 500)  # Set the interval to 500ms
+    pygame.time.set_timer(BULLET_UPDATE_EVENT, 200)  # Set the interval to 500ms
 
     grid = Grid(GRID_SIZE)
     grid.bullet_start_indices = []
@@ -36,7 +37,13 @@ def main():
     map_selection_screen = MapSelectionScreen()
     selected_map = None
 
+    SHOOT_EVENT = pygame.USEREVENT + 2
+    pygame.time.set_timer(SHOOT_EVENT, random.randint(1000, 3000))
+
     computer_player = ComputerPlayer(grid)
+
+    game_over = False
+    game_over_font = pygame.font.Font(None, 50)
 
     while True:
         for event in pygame.event.get():
@@ -77,7 +84,10 @@ def main():
                     cell_x, cell_y = x // CELL_SIZE, y // CELL_SIZE
 
                     # Toggle cell color
-                    if grid.is_valid_move(cell_x, cell_y) and grid.grid[cell_y][cell_x] == 0:
+
+                    if len(grid.path) < MAX_MOVES and \
+                            grid.is_valid_move(cell_x, cell_y) and \
+                            grid.grid[cell_y][cell_x] == 0:
                         grid.grid[cell_y][cell_x] = 1
                         grid.path.append((cell_x, cell_y))
                         grid.firedBullets.append(False)
@@ -94,7 +104,9 @@ def main():
                     elif grid.path and (cell_x, cell_y) == grid.path[-1]:
                         grid.grid[cell_y][cell_x] = 0
                         grid.path.pop()
-                        computer_player.path.pop()
+                        if len(computer_player.path) > 0:
+                            computer_player.path.pop()
+                            computer_player.fired_bullets.pop()
                         grid.firedBullets.pop()
 
                 if show_map_selection:
@@ -118,11 +130,29 @@ def main():
                 if direction:
                     if \
                             play_mode and \
-                                    play_index > 0 and \
-                                    grid.firedBullets[play_index - 1] is False:
+                            play_index > 0 and \
+                            grid.firedBullets[play_index - 1] is False:
                         grid.shoot_bullet(direction, grid.path[play_index - 1], play_index)
                     elif not play_mode:
                         grid.shoot_bullet(direction)
+
+            if play_mode and \
+                    play_index < len(computer_player.path) and \
+                    computer_player.fired_bullets.count(True) < MAX_BULLETS:
+                if event.type == SHOOT_EVENT:
+                    # Choose a random position for the computer shooter
+                    shooter_x = computer_player.path[play_index-1][0]
+                    shooter_y = computer_player.path[play_index-1][1]
+
+                    # Get the direction towards the user
+                    direction = grid.get_direction_towards_user(shooter_x, shooter_y)
+
+                    # Shoot the bullet
+                    grid.shoot_bullet(direction, start_pos=(shooter_x, shooter_y))
+                    computer_player.fired_bullets[play_index-1] = True
+
+                    # Reschedule the event with a random interval between 1 and 3 seconds
+                    pygame.time.set_timer(SHOOT_EVENT, random.randint(1000, 3000))
 
             # Toggle grid lines
             if event.type == pygame.KEYDOWN:
@@ -143,14 +173,32 @@ def main():
             if play_index < len(grid.path) and pygame.time.get_ticks() - play_timer > play_interval:
                 play_timer = pygame.time.get_ticks()
                 play_index += 1
+
+                # Check for bullet collision
+                computer_current_pos = computer_player.path[play_index-1]
+                if grid.check_bullet_collision(*computer_current_pos):
+                    print(f'computer dead = comp: {computer_current_pos}; user: {grid.path[play_index-1]}')
+                    game_over = True
+
+                user_current_pos = grid.path[play_index-1]
+                if grid.check_bullet_collision(*user_current_pos):
+                    game_over = True
+
             show_lines = False
             grid.draw(screen, show_lines, play_index - 1, computer_player.path)
+
+            # Draw game over message
+            if game_over:
+                game_over_text = game_over_font.render("Game Over", True, BLACK)
+                text_rect = game_over_text.get_rect(center=(SCREEN_SIZE // 2, SCREEN_SIZE // 2))
+                screen.blit(game_over_text, text_rect)
+
             clock.tick(10)
         else:
             # Update the screen
             # grid.update_bullets()
             grid.draw(screen, show_lines)
-            if grid.path:
+            if grid.path and len(grid.path) < MAX_MOVES:
                 grid.draw_highlight(screen, *grid.path[-1])
             play_button.draw(screen)
             clock.tick(60)

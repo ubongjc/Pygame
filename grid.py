@@ -33,14 +33,15 @@ class Grid:
 
         for y in range(self.size):
             for x in range(self.size):
-                color = None
-                if current_path_index is not None \
-                        and computer_path is not None \
-                        and (x, y) == computer_path[current_path_index]:
-                    color = BLUE
+                if current_path_index is not None and \
+                        current_path_index < len(computer_path) and \
+                        computer_path is not None:
+                    color = None
+                    if (x, y) == computer_path[current_path_index]:
+                        color = BLUE
 
-                if color:
-                    pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                    if color:
+                        pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
         for bullet in self.bullets:
             pygame.draw.rect(surface, BLACK, (bullet['x'] * CELL_SIZE, bullet['y'] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
@@ -61,6 +62,9 @@ class Grid:
                 pygame.draw.rect(surface, RED, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 1)
 
     def shoot_bullet(self, direction, start_pos=None, current_path_index=-1):
+        if self.firedBullets.count(True) >= MAX_BULLETS:
+            return
+
         if start_pos is None:
             start_pos = self.path[-1] if self.path else (0, 0)
 
@@ -72,7 +76,7 @@ class Grid:
         self.bullets.append(bullet)
 
         if current_path_index != -1:
-            self.firedBullets[current_path_index - 1] = True
+            self.firedBullets[current_path_index-1] = True
 
     def update_bullets(self):
         for bullet in self.bullets:
@@ -99,3 +103,9 @@ class Grid:
             return 'right' if dx > 0 else 'left'
         else:
             return 'down' if dy > 0 else 'up'
+
+    def check_bullet_collision(self, x, y):
+        for bullet in self.bullets:
+            if bullet['x'] == x and bullet['y'] == y:
+                return True
+        return False
