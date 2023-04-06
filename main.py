@@ -64,7 +64,8 @@ def main():
                         for i in range(diff_len):
                             computer_player.choose_random_move()
 
-                    print("Computer's selected path:", computer_player.path)  # Print the computer's selected path
+                    print(f"Computer's selected path: {computer_player.path}\n len: {len(computer_player.path)}")  # Print the computer's selected path
+                    print(f"user's selected path: {grid.path}\n len: {len(grid.path)}")
                     show_lines = False
                     grid.grid = [[0 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
                     play_mode = True
@@ -93,6 +94,7 @@ def main():
                     elif grid.path and (cell_x, cell_y) == grid.path[-1]:
                         grid.grid[cell_y][cell_x] = 0
                         grid.path.pop()
+                        computer_player.path.pop()
                         grid.firedBullets.pop()
 
                 if show_map_selection:

@@ -17,8 +17,6 @@ class Grid:
             for x in range(self.size):
                 if current_path_index is not None and (x, y) == self.path[current_path_index]:
                     color = RED
-                elif computer_path is not None and (x, y) in computer_path:
-                    color = (0, 0, 255)  # Blue color
                 elif self.grid[y][x] == 1:
                     if (x, y) == self.path[-1]:
                         color = (136, 8, 8)  # Slightly different shade of red
@@ -32,6 +30,17 @@ class Grid:
 
                 if show_lines:
                     pygame.draw.rect(surface, GREY, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 1)
+
+        for y in range(self.size):
+            for x in range(self.size):
+                color = None
+                if current_path_index is not None \
+                        and computer_path is not None \
+                        and (x, y) == computer_path[current_path_index]:
+                    color = BLUE
+
+                if color:
+                    pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
         for bullet in self.bullets:
             pygame.draw.rect(surface, BLACK, (bullet['x'] * CELL_SIZE, bullet['y'] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
@@ -78,3 +87,15 @@ class Grid:
 
             if bullet['x'] < 0 or bullet['x'] >= self.size or bullet['y'] < 0 or bullet['y'] >= self.size:
                 self.bullets.remove(bullet)
+
+    def get_direction_towards_user(self, bullet_x, bullet_y, user_position=None):
+        if user_position is None:
+            user_position = self.path[-1] if self.path else (0, 0)
+
+        dx = user_position[0] - bullet_x
+        dy = user_position[1] - bullet_y
+
+        if abs(dx) > abs(dy):
+            return 'right' if dx > 0 else 'left'
+        else:
+            return 'down' if dy > 0 else 'up'
