@@ -30,21 +30,21 @@ class ComputerPlayer:
             self.fired_bullets.append(False)
 
     def rollback_to_validity_if_necessary(self):
-        print(f'original self.path => {self.path}')
+        #print(f'original #self.path => {self.path}')
         num_valid = len(self.valid_moves())
         popped_value = (-1, -1)
         if num_valid < 1 and len(self.path) > 0:
             while num_valid < 2 and len(self.path) > 0:
                 popped_value = self.path.pop()
-                print(f'popped_value => {popped_value}')
+                #print(f'popped_value => {popped_value}')
                 num_valid = len(self.valid_moves())
-                print(f'num_valid => {num_valid}')
+                #print(f'num_valid => {num_valid}')
             temp = self.valid_moves()
             if popped_value in temp:
                 temp.remove(popped_value)
-                print(f'temp => {temp}')
+                #print(f'temp => {temp}')
             if len(temp) > 0:
                 self.path.append(temp[0])
-                print(f'self.path => {self.path}')
+                #rint(f'#self.path => {self.path}')
             return True
         return False

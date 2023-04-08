@@ -1,5 +1,8 @@
 import pygame
+
+import constants
 from constants import *
+from computer_player import ComputerPlayer
 
 
 class Grid:
@@ -8,43 +11,61 @@ class Grid:
         self.grid = [[0 for _ in range(size)] for _ in range(size)]
         self.path = []
         self.bullets = []
-        self.firedBullets = []
+        self.fired_bullets = []
+        self.computer_bullets = []
         self.bullet_start_indices = []
+        self.game_over = False
+        self.winner = None
 
     def draw(self, surface, show_lines=True, current_path_index=None, computer_path=None):
-        surface.fill(WHITE)
-        for y in range(self.size):
-            for x in range(self.size):
-                if current_path_index is not None and (x, y) == self.path[current_path_index]:
-                    color = RED
-                elif self.grid[y][x] == 1:
-                    if (x, y) == self.path[-1]:
-                        color = (136, 8, 8)  # Slightly different shade of red
-                    else:
+        if self.winner:
+            result_font = pygame.font.Font(None, 50)
+            result_text = None
+            if self.winner == "user":
+                result_text = result_font.render("You Win!", True, BLACK)
+            elif self.winner == "computer":
+                result_text = result_font.render("Game Over", True, BLACK)
+            text_rect = result_text.get_rect(center=(SCREEN_SIZE // 2, SCREEN_SIZE // 2))
+            surface.blit(result_text, text_rect)
+        else:
+            surface.fill(WHITE)
+            for y in range(self.size):
+                for x in range(self.size):
+                    if current_path_index is not None and (x, y) == self.path[current_path_index]:
                         color = RED
-                else:
-                    color = None
-
-                if color:
-                    pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-
-                if show_lines:
-                    pygame.draw.rect(surface, GREY, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 1)
-
-        for y in range(self.size):
-            for x in range(self.size):
-                if current_path_index is not None and \
-                        current_path_index < len(computer_path) and \
-                        computer_path is not None:
-                    color = None
-                    if (x, y) == computer_path[current_path_index]:
-                        color = BLUE
+                    elif self.grid[y][x] == 1:
+                        if (x, y) == self.path[-1]:
+                            color = (136, 8, 8)  # Slightly different shade of red
+                        else:
+                            color = RED
+                    else:
+                        color = None
 
                     if color:
                         pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
-        for bullet in self.bullets:
-            pygame.draw.rect(surface, BLACK, (bullet['x'] * CELL_SIZE, bullet['y'] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                    if show_lines:
+                        pygame.draw.rect(surface, GREY, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 1)
+
+            for y in range(self.size):
+                for x in range(self.size):
+                    if current_path_index is not None and \
+                            current_path_index < len(computer_path) and \
+                            computer_path is not None:
+                        color = None
+                        if (x, y) == computer_path[current_path_index]:
+                            color = BLUE
+
+                        if color:
+                            pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+
+            for bullet in self.bullets:
+                pygame.draw.rect(surface, BLACK, (bullet['x'] * CELL_SIZE, bullet['y'] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+
+            for bullet in self.computer_bullets:
+                pygame.draw.rect(surface, BLACK, (bullet['x'] * CELL_SIZE, bullet['y'] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+
+
 
     def is_valid_move(self, cell_x, cell_y):
         if len(self.path) == 0:
@@ -62,23 +83,42 @@ class Grid:
                 pygame.draw.rect(surface, RED, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 1)
 
     def shoot_bullet(self, direction, start_pos=None, current_path_index=-1):
-        if self.firedBullets.count(True) >= MAX_BULLETS:
-            return
+        if self.winner is None:
+            if self.fired_bullets.count(True) >= MAX_BULLETS:
+                return
 
-        if start_pos is None:
-            start_pos = self.path[-1] if self.path else (0, 0)
+            if start_pos is None:
+                start_pos = self.path[-1] if self.path else (0, 0)
 
-        bullet = {
-            'x': start_pos[0],
-            'y': start_pos[1],
-            'direction': direction
-        }
-        self.bullets.append(bullet)
+            bullet = {
+                'x': start_pos[0],
+                'y': start_pos[1],
+                'direction': direction
+            }
+            self.bullets.append(bullet)
 
-        if current_path_index != -1:
-            self.firedBullets[current_path_index-1] = True
+            if current_path_index != -1:
+                self.fired_bullets[current_path_index - 1] = True
 
-    def update_bullets(self):
+    def shoot_bullet_computer(self, direction, start_pos=None, current_path_index=-1, computer_player=None):
+        if self.winner is None:
+            if computer_player.fired_bullets.count(True) >= MAX_BULLETS:
+                return
+
+            if start_pos is None:
+                start_pos = computer_player.path[-1] if computer_player.path else (0, 0)
+
+            bullet = {
+                'x': start_pos[0],
+                'y': start_pos[1],
+                'direction': direction
+            }
+            self.computer_bullets.append(bullet)
+
+            if current_path_index != -1:
+                computer_player.fired_bullets[current_path_index - 1] = True
+
+    def update_bullets(self, computer_path, play_index):
         for bullet in self.bullets:
             if bullet['direction'] == 'left':
                 bullet['x'] -= 1
@@ -91,6 +131,26 @@ class Grid:
 
             if bullet['x'] < 0 or bullet['x'] >= self.size or bullet['y'] < 0 or bullet['y'] >= self.size:
                 self.bullets.remove(bullet)
+            elif self.check_user_bullet_collision(computer_path[play_index][0], computer_path[play_index][1]):
+                self.winner = "user"
+                self.game_over = True
+
+    def update_bullets_computer(self, user_path, play_index):
+        for bullet in self.computer_bullets:
+            if bullet['direction'] == 'left':
+                bullet['x'] -= 1
+            elif bullet['direction'] == 'right':
+                bullet['x'] += 1
+            elif bullet['direction'] == 'up':
+                bullet['y'] -= 1
+            elif bullet['direction'] == 'down':
+                bullet['y'] += 1
+
+            if bullet['x'] < 0 or bullet['x'] >= self.size or bullet['y'] < 0 or bullet['y'] >= self.size:
+                self.computer_bullets.remove(bullet)
+            elif self.check_computer_bullet_collision(user_path[play_index][0], user_path[play_index][1]):
+                self.winner = "computer"
+                self.game_over = True
 
     def get_direction_towards_user(self, bullet_x, bullet_y, user_position=None):
         if user_position is None:
@@ -104,8 +164,14 @@ class Grid:
         else:
             return 'down' if dy > 0 else 'up'
 
-    def check_bullet_collision(self, x, y):
+    def check_user_bullet_collision(self, x, y):
         for bullet in self.bullets:
+            if bullet['x'] == x and bullet['y'] == y:
+                return True
+        return False
+
+    def check_computer_bullet_collision(self, x, y):
+        for bullet in self.computer_bullets:
             if bullet['x'] == x and bullet['y'] == y:
                 return True
         return False
