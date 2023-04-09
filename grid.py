@@ -1,8 +1,6 @@
 import pygame
 
 import constants
-from constants import *
-from computer_player import ComputerPlayer
 
 
 class Grid:
@@ -22,30 +20,32 @@ class Grid:
             result_font = pygame.font.Font(None, 50)
             result_text = None
             if self.winner == "user":
-                result_text = result_font.render("You Win!", True, BLACK)
+                result_text = result_font.render("You Win!", True, constants.BLACK)
             elif self.winner == "computer":
-                result_text = result_font.render("Game Over", True, BLACK)
-            text_rect = result_text.get_rect(center=(SCREEN_SIZE // 2, SCREEN_SIZE // 2))
+                result_text = result_font.render("Game Over", True, constants.BLACK)
+            text_rect = result_text.get_rect(center=(constants.SCREEN_SIZE // 2, constants.SCREEN_SIZE // 2))
             surface.blit(result_text, text_rect)
         else:
-            surface.fill(WHITE)
+            surface.fill(constants.WHITE)
             for y in range(self.size):
                 for x in range(self.size):
                     if current_path_index is not None and (x, y) == self.path[current_path_index]:
-                        color = RED
+                        color = constants.RED
                     elif self.grid[y][x] == 1:
                         if (x, y) == self.path[-1]:
                             color = (136, 8, 8)  # Slightly different shade of red
                         else:
-                            color = RED
+                            color = constants.RED
                     else:
                         color = None
 
                     if color:
-                        pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                        pygame.draw.rect(surface, color, (x * constants.CELL_SIZE, y * constants.CELL_SIZE,
+                                                          constants.CELL_SIZE, constants.CELL_SIZE))
 
                     if show_lines:
-                        pygame.draw.rect(surface, GREY, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 1)
+                        pygame.draw.rect(surface, constants.GREY, (x * constants.CELL_SIZE, y * constants.CELL_SIZE,
+                                                                   constants.CELL_SIZE, constants.CELL_SIZE), 1)
 
             for y in range(self.size):
                 for x in range(self.size):
@@ -54,18 +54,25 @@ class Grid:
                             computer_path is not None:
                         color = None
                         if (x, y) == computer_path[current_path_index]:
-                            color = BLUE
+                            color = constants.BLUE
 
                         if color:
-                            pygame.draw.rect(surface, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                            pygame.draw.rect(surface, color, (x * constants.CELL_SIZE, y * constants.CELL_SIZE,
+                                                              constants.CELL_SIZE, constants.CELL_SIZE))
+
+            bullet_radius = constants.CELL_SIZE // 8  # Adjust this value to change the bullet size
 
             for bullet in self.bullets:
-                pygame.draw.rect(surface, BLACK, (bullet['x'] * CELL_SIZE, bullet['y'] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                pygame.draw.circle(surface, constants.RED,
+                                   (bullet['x'] * constants.CELL_SIZE + constants.CELL_SIZE // 2,
+                                    bullet['y'] * constants.CELL_SIZE + constants.CELL_SIZE // 2),
+                                   bullet_radius)
 
             for bullet in self.computer_bullets:
-                pygame.draw.rect(surface, BLACK, (bullet['x'] * CELL_SIZE, bullet['y'] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
-
-
+                pygame.draw.circle(surface, constants.BLUE,
+                                   (bullet['x'] * constants.CELL_SIZE + constants.CELL_SIZE // 2,
+                                    bullet['y'] * constants.CELL_SIZE + constants.CELL_SIZE // 2),
+                                   bullet_radius)
 
     def is_valid_move(self, cell_x, cell_y):
         if len(self.path) == 0:
@@ -75,16 +82,17 @@ class Grid:
         dy = abs(last_cell[1] - cell_y)
         return (dx == 1 and dy == 0) or (dx == 0 and dy == 1)
 
-    def draw_highlight(self, surface, cell_x, cell_y):
+    def draw_highlight(self, surface):
         last_cell = self.path[-1]
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             x, y = last_cell[0] + dx, last_cell[1] + dy
             if 0 <= x < self.size and 0 <= y < self.size and self.grid[y][x] == 0:
-                pygame.draw.rect(surface, RED, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE), 1)
+                pygame.draw.rect(surface, constants.RED, (x * constants.CELL_SIZE, y * constants.CELL_SIZE,
+                                                          constants.CELL_SIZE, constants.CELL_SIZE), 1)
 
     def shoot_bullet(self, direction, start_pos=None, current_path_index=-1):
         if self.winner is None:
-            if self.fired_bullets.count(True) >= MAX_BULLETS:
+            if self.fired_bullets.count(True) >= constants.MAX_BULLETS:
                 return
 
             if start_pos is None:
@@ -102,7 +110,7 @@ class Grid:
 
     def shoot_bullet_computer(self, direction, start_pos=None, current_path_index=-1, computer_player=None):
         if self.winner is None:
-            if computer_player.fired_bullets.count(True) >= MAX_BULLETS:
+            if computer_player.fired_bullets.count(True) >= constants.MAX_BULLETS:
                 return
 
             if start_pos is None:
