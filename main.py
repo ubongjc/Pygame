@@ -13,6 +13,40 @@ from button import Button
 pygame.init()
 
 
+def draw_play_button():
+    # play button
+    button_width = 100
+    button_height = 40
+    button_x = (constants.SCREEN_SIZE - button_width) // 2  # Calculate the center x position
+    button_y = (constants.SCREEN_SIZE - button_height) // 2  # Calculate the center y position
+    return Button(button_x, button_y, button_width, button_height, "Play", (0, 128, 0), 30)
+
+
+def display_centered_texts(screen, texts, font_size, color, line_spacing=10):
+    screen_width, screen_height = screen.get_size()
+
+    # Create a font object
+    font = pygame.font.Font(None, font_size)
+
+    # Calculate the total height of all lines of text
+    total_text_height = len(texts) * font.get_height() + (len(texts) - 1) * line_spacing
+
+    # Calculate the starting Y position for the first line of text
+    start_y = (screen_height - total_text_height) // 2
+
+    for i, text in enumerate(texts):
+        # Render the text and get its surface
+        text_surface = font.render(text, True, color)
+
+        # Calculate the position of the text
+        text_width, text_height = text_surface.get_size()
+        pos_x = (screen_width - text_width) // 2
+        pos_y = start_y + i * (text_height + line_spacing)
+
+        # Blit the text surface onto the screen
+        screen.blit(text_surface, (pos_x, pos_y))
+
+
 # Main function
 def main():
     # Get the user's screen size
@@ -34,12 +68,7 @@ def main():
     grid.bullet_start_indices = []
     show_lines = True
 
-    # play button
-    button_width = 100
-    button_height = 40
-    button_x = (constants.SCREEN_SIZE - button_width) // 2  # Calculate the center x position
-    button_y = (constants.SCREEN_SIZE - button_height) // 2  # Calculate the center y position
-    play_button = Button(button_x, button_y, button_width, button_height, "Play", (0, 128, 0), 30)
+    play_button = draw_play_button()
 
     play_mode = False
     play_index = 0
@@ -75,15 +104,6 @@ def main():
                 if play_button.is_clicked(x, y) and \
                         len(grid.path) >= constants.MAX_MOVES and \
                         not play_mode:
-                    # computer_player.path.pop()
-
-                    # user_grid_len = len(grid.path)
-                    # computer_grid_len = len(computer_player.path)
-                    #
-                    # if user_grid_len > computer_grid_len:
-                    #     diff_len = user_grid_len - computer_grid_len
-                    #     for i in range(diff_len):
-                    #         computer_player.choose_random_move()
 
                     print(f"Computer's selected path: {computer_player.path}\n len: {len(computer_player.path)}")
                     print(f"user's selected path: {grid.path}\n len: {len(grid.path)}")
@@ -106,15 +126,6 @@ def main():
                         grid.path.append((cell_x, cell_y))
                         grid.fired_bullets.append(False)
 
-                        # computer_player.choose_random_move()
-                        # if computer_player.rollback_to_validity_if_necessary():
-                        #     user_grid_len = len(grid.path)
-                        #     computer_grid_len = len(computer_player.path)
-                        #     if user_grid_len > computer_grid_len:
-                        #         diff_len = user_grid_len - computer_grid_len
-                        #         for i in range(diff_len):
-                        #             computer_player.choose_random_move()
-
                     elif grid.path and (cell_x, cell_y) == grid.path[-1]:
                         grid.grid[cell_y][cell_x] = 0
                         grid.path.pop()
@@ -128,6 +139,14 @@ def main():
                     if selected_map:
                         show_map_selection = False
                         print("Selected map:", selected_map)
+
+                        # draw_font = pygame.font.Font(None, 50)
+                        # draw_text = draw_font.render(f"Round 1 - {constants.MAX_MOVES} moves",
+                        #                              True, constants.BLACK)
+                        # text_rect = draw_text.get_rect(center=(constants.SCREEN_SIZE // 2, constants.SCREEN_SIZE // 2))
+                        # screen.blit(draw_text, text_rect)
+                        # pygame.display.flip()
+                        # pygame.time.wait(2000)  # Wait for 2 seconds (2000 ms)
 
             # Shoot bullet
             if event.type == pygame.KEYDOWN:
@@ -191,6 +210,17 @@ def main():
         # reset game
         if not grid.winner and play_index == len(grid.path) and \
                 play_index > 0:
+            # Display "Draw - Round 2" text
+            round_number = 11 - (constants.MAX_BULLETS - 1)
+            texts = [
+                f"Draw - Round {round_number}",
+                f"{constants.MAX_MOVES - 2} moves"
+            ]
+            display_centered_texts(screen, texts, font_size=50, color=constants.BLACK)
+
+            pygame.display.flip()
+            pygame.time.wait(2000)  # Wait for 2 seconds (2000 ms)
+
             if constants.GRID_SIZE > 5:
                 constants.GRID_SIZE -= 1
                 constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
@@ -221,6 +251,7 @@ def main():
             if grid.path and len(grid.path) < constants.MAX_MOVES:
                 grid.draw_highlight(screen)
             elif grid.path and len(grid.path) >= constants.MAX_MOVES:
+                play_button = draw_play_button()
                 play_button.draw(screen)
             clock.tick(60)
 

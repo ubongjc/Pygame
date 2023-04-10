@@ -1,6 +1,8 @@
+import random
 import pygame
-
 import constants
+import math
+
 
 
 class Grid:
@@ -164,17 +166,28 @@ class Grid:
                     self.winner = "computer"
                     self.game_over = True
 
-    def get_direction_towards_user(self, bullet_x, bullet_y, user_position=None):
-        if user_position is None:
-            user_position = self.path[-1] if self.path else (0, 0)
+    def get_direction_towards_user(self, x, y):
+        if not self.path:
+            return random.choice(['left', 'right', 'up', 'down'])
 
-        dx = user_position[0] - bullet_x
-        dy = user_position[1] - bullet_y
+        target_x, target_y = self.path[-1]  # Get the user's current position
+        dx, dy = target_x - x, target_y - y
 
-        if abs(dx) > abs(dy):
-            return 'right' if dx > 0 else 'left'
-        else:
-            return 'down' if dy > 0 else 'up'
+        angle = math.degrees(math.atan2(dy, dx))  # Calculate the angle in degrees
+        angle = (angle + 360) % 360  # Normalize angle to the range [0, 360)
+
+        # Define directions and their corresponding angles
+        directions_angles = {
+            'right': 0,
+            'down': 90,
+            'left': 180,
+            'up': 270
+        }
+
+        # Find the closest direction to the calculated angle
+        closest_direction = min(directions_angles, key=lambda direction: abs(directions_angles[direction] - angle))
+
+        return closest_direction
 
     def check_user_bullet_collision(self, x, y):
         for bullet in self.bullets:
