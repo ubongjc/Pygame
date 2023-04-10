@@ -15,6 +15,15 @@ pygame.init()
 
 # Main function
 def main():
+    # Get the user's screen size
+    screen_info = pygame.display.Info()
+    screen_width = screen_info.current_w
+    screen_height = screen_info.current_h
+
+    # Calculate the appropriate cell size
+    constants.CELL_SIZE = min(screen_width, screen_height) // constants.GRID_SIZE
+    constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
+
     screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
     pygame.display.set_caption("Pygame Grid Game")
     clock = pygame.time.Clock()
@@ -24,7 +33,13 @@ def main():
     grid = Grid(constants.GRID_SIZE)
     grid.bullet_start_indices = []
     show_lines = True
-    play_button = Button(10, 10, 100, 40, "Play", (0, 128, 0), 30)
+
+    # play button
+    button_width = 100
+    button_height = 40
+    button_x = (constants.SCREEN_SIZE - button_width) // 2  # Calculate the center x position
+    button_y = (constants.SCREEN_SIZE - button_height) // 2  # Calculate the center y position
+    play_button = Button(button_x, button_y, button_width, button_height, "Play", (0, 128, 0), 30)
 
     play_mode = False
     play_index = 0
@@ -39,6 +54,7 @@ def main():
     pygame.time.set_timer(shoot_event, random.randint(1000, 3000))
 
     computer_player = ComputerPlayer(grid)
+    screen_resized = False
 
     while True:
         for event in pygame.event.get():
@@ -47,8 +63,8 @@ def main():
                 sys.exit()
 
             if event.type == bullet_update_event:
-                grid.update_bullets(computer_player.path, play_index-1)
-                grid.update_bullets_computer(grid.path, play_index-1)
+                grid.update_bullets(computer_player.path, play_index - 1)
+                grid.update_bullets_computer(grid.path, play_index - 1)
 
             # Input handling
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -56,8 +72,10 @@ def main():
                 x, y = pygame.mouse.get_pos()
 
                 # Check if the play button is clicked
-                if play_button.is_clicked(x, y):
-                    #computer_player.path.pop()
+                if play_button.is_clicked(x, y) and \
+                        len(grid.path) >= constants.MAX_MOVES and \
+                        not play_mode:
+                    # computer_player.path.pop()
 
                     # user_grid_len = len(grid.path)
                     # computer_grid_len = len(computer_player.path)
@@ -126,8 +144,8 @@ def main():
                 if direction:
                     if \
                             play_mode and \
-                            play_index > 0 and \
-                            grid.fired_bullets[play_index - 1] is False:
+                                    play_index > 0 and \
+                                    grid.fired_bullets[play_index - 1] is False:
                         grid.shoot_bullet(direction, grid.path[play_index - 1], play_index)
                     elif not play_mode:
                         grid.shoot_bullet(direction)
@@ -137,8 +155,8 @@ def main():
                     computer_player.fired_bullets.count(True) < constants.MAX_BULLETS:
                 if event.type == shoot_event:
                     # Choose a random position for the computer shooter
-                    shooter_x = computer_player.path[play_index-1][0]
-                    shooter_y = computer_player.path[play_index-1][1]
+                    shooter_x = computer_player.path[play_index - 1][0]
+                    shooter_y = computer_player.path[play_index - 1][1]
 
                     # Get the direction towards the user
                     direction = grid.get_direction_towards_user(shooter_x, shooter_y)
@@ -158,10 +176,17 @@ def main():
 
             # Resize the screen
             if event.type == pygame.VIDEORESIZE:
+                #screen_resized = True
                 width, height = event.w, event.h
                 constants.CELL_SIZE = min(width // constants.GRID_SIZE, height // constants.GRID_SIZE)
                 constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
                 screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
+
+        # if screen_resized:
+        #     screen_resized = False
+        #     screen.fill(constants.WHITE)
+        #     grid.draw(screen)
+        #     pygame.display.flip()
 
         # reset game
         if not grid.winner and play_index == len(grid.path) and \

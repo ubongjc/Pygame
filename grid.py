@@ -129,38 +129,40 @@ class Grid:
                 computer_player.fired_bullets[current_path_index - 1] = True
 
     def update_bullets(self, computer_path, play_index):
-        for bullet in self.bullets:
-            if bullet['direction'] == 'left':
-                bullet['x'] -= 1
-            elif bullet['direction'] == 'right':
-                bullet['x'] += 1
-            elif bullet['direction'] == 'up':
-                bullet['y'] -= 1
-            elif bullet['direction'] == 'down':
-                bullet['y'] += 1
+        if self.winner is None:
+            for bullet in self.bullets:
+                if bullet['direction'] == 'left':
+                    bullet['x'] -= 1
+                elif bullet['direction'] == 'right':
+                    bullet['x'] += 1
+                elif bullet['direction'] == 'up':
+                    bullet['y'] -= 1
+                elif bullet['direction'] == 'down':
+                    bullet['y'] += 1
 
-            if bullet['x'] < 0 or bullet['x'] >= self.size or bullet['y'] < 0 or bullet['y'] >= self.size:
-                self.bullets.remove(bullet)
-            elif self.check_user_bullet_collision(computer_path[play_index][0], computer_path[play_index][1]):
-                self.winner = "user"
-                self.game_over = True
+                if bullet['x'] < 0 or bullet['x'] >= self.size or bullet['y'] < 0 or bullet['y'] >= self.size:
+                    self.bullets.remove(bullet)
+                elif self.check_user_bullet_collision(computer_path[play_index][0], computer_path[play_index][1]):
+                    self.winner = "user"
+                    self.game_over = True
 
     def update_bullets_computer(self, user_path, play_index):
-        for bullet in self.computer_bullets:
-            if bullet['direction'] == 'left':
-                bullet['x'] -= 1
-            elif bullet['direction'] == 'right':
-                bullet['x'] += 1
-            elif bullet['direction'] == 'up':
-                bullet['y'] -= 1
-            elif bullet['direction'] == 'down':
-                bullet['y'] += 1
+        if self.winner is None:
+            for bullet in self.computer_bullets:
+                if bullet['direction'] == 'left':
+                    bullet['x'] -= 1
+                elif bullet['direction'] == 'right':
+                    bullet['x'] += 1
+                elif bullet['direction'] == 'up':
+                    bullet['y'] -= 1
+                elif bullet['direction'] == 'down':
+                    bullet['y'] += 1
 
-            if bullet['x'] < 0 or bullet['x'] >= self.size or bullet['y'] < 0 or bullet['y'] >= self.size:
-                self.computer_bullets.remove(bullet)
-            elif self.check_computer_bullet_collision(user_path[play_index][0], user_path[play_index][1]):
-                self.winner = "computer"
-                self.game_over = True
+                if bullet['x'] < 0 or bullet['x'] >= self.size or bullet['y'] < 0 or bullet['y'] >= self.size:
+                    self.computer_bullets.remove(bullet)
+                elif self.check_computer_bullet_collision(user_path[play_index][0], user_path[play_index][1]):
+                    self.winner = "computer"
+                    self.game_over = True
 
     def get_direction_towards_user(self, bullet_x, bullet_y, user_position=None):
         if user_position is None:

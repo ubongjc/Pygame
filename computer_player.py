@@ -23,27 +23,6 @@ class ComputerPlayer:
                     valid_moves.append((x, y))
         return valid_moves
 
-    # def choose_random_move(self):
-    #     moves = self.valid_moves()
-    #     if moves:
-    #         self.path.append(random.choice(moves))
-    #         self.fired_bullets.append(False)
-    #
-    # def rollback_to_validity_if_necessary(self):
-    #     num_valid = len(self.valid_moves())
-    #     popped_value = (-1, -1)
-    #     if num_valid < 1 and len(self.path) > 0:
-    #         while num_valid < 2 and len(self.path) > 0:
-    #             popped_value = self.path.pop()
-    #             num_valid = len(self.valid_moves())
-    #         temp = self.valid_moves()
-    #         if popped_value in temp:
-    #             temp.remove(popped_value)
-    #         if len(temp) > 0:
-    #             self.path.append(temp[0])
-    #         return True
-    #     return False
-
     def generate_path(self):
         def backtrack(current_pos):
             if len(self.path) >= constants.MAX_MOVES:
@@ -60,4 +39,9 @@ class ComputerPlayer:
                 self.fired_bullets.pop()
             return False
 
-        backtrack(self.path[0])
+        while True:
+            success = backtrack(self.path[0])
+            if success and len(self.path) == constants.MAX_MOVES:
+                break
+            self.path = [self.path[0]]
+            self.fired_bullets = []
