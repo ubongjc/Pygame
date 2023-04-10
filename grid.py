@@ -29,7 +29,9 @@ class Grid:
             surface.fill(constants.WHITE)
             for y in range(self.size):
                 for x in range(self.size):
-                    if current_path_index is not None and (x, y) == self.path[current_path_index]:
+                    if current_path_index is not None and \
+                            0 <= current_path_index < len(self.path) and \
+                            (x, y) == self.path[current_path_index]:
                         color = constants.RED
                     elif self.grid[y][x] == 1:
                         if (x, y) == self.path[-1]:

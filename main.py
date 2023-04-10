@@ -57,15 +57,15 @@ def main():
 
                 # Check if the play button is clicked
                 if play_button.is_clicked(x, y):
-                    computer_player.path.pop()
+                    #computer_player.path.pop()
 
-                    user_grid_len = len(grid.path)
-                    computer_grid_len = len(computer_player.path)
-
-                    if user_grid_len > computer_grid_len:
-                        diff_len = user_grid_len - computer_grid_len
-                        for i in range(diff_len):
-                            computer_player.choose_random_move()
+                    # user_grid_len = len(grid.path)
+                    # computer_grid_len = len(computer_player.path)
+                    #
+                    # if user_grid_len > computer_grid_len:
+                    #     diff_len = user_grid_len - computer_grid_len
+                    #     for i in range(diff_len):
+                    #         computer_player.choose_random_move()
 
                     print(f"Computer's selected path: {computer_player.path}\n len: {len(computer_player.path)}")
                     print(f"user's selected path: {grid.path}\n len: {len(grid.path)}")
@@ -88,14 +88,14 @@ def main():
                         grid.path.append((cell_x, cell_y))
                         grid.fired_bullets.append(False)
 
-                        computer_player.choose_random_move()
-                        if computer_player.rollback_to_validity_if_necessary():
-                            user_grid_len = len(grid.path)
-                            computer_grid_len = len(computer_player.path)
-                            if user_grid_len > computer_grid_len:
-                                diff_len = user_grid_len - computer_grid_len
-                                for i in range(diff_len):
-                                    computer_player.choose_random_move()
+                        # computer_player.choose_random_move()
+                        # if computer_player.rollback_to_validity_if_necessary():
+                        #     user_grid_len = len(grid.path)
+                        #     computer_grid_len = len(computer_player.path)
+                        #     if user_grid_len > computer_grid_len:
+                        #         diff_len = user_grid_len - computer_grid_len
+                        #         for i in range(diff_len):
+                        #             computer_player.choose_random_move()
 
                     elif grid.path and (cell_x, cell_y) == grid.path[-1]:
                         grid.grid[cell_y][cell_x] = 0
@@ -166,17 +166,18 @@ def main():
         # reset game
         if not grid.winner and play_index == len(grid.path) and \
                 play_index > 0:
-            constants.GRID_SIZE -= 1
-            constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
-            constants.MAX_MOVES = constants.GRID_SIZE * 2
-            constants.MAX_BULLETS = constants.MAX_MOVES // 2
-            screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
-            grid = Grid(constants.GRID_SIZE)
-            computer_player = ComputerPlayer(grid)
-            show_lines = True
-            play_mode = False
-            play_index = 0
-            play_timer = 0
+            if constants.GRID_SIZE > 5:
+                constants.GRID_SIZE -= 1
+                constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
+                constants.MAX_MOVES = constants.GRID_SIZE * 2
+                constants.MAX_BULLETS = constants.MAX_MOVES // 2
+                screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
+                grid = Grid(constants.GRID_SIZE)
+                computer_player = ComputerPlayer(grid)
+                show_lines = True
+                play_mode = False
+                play_index = 0
+                play_timer = 0
 
         # Update the screen
         if show_map_selection:
@@ -194,7 +195,7 @@ def main():
             grid.draw(screen, show_lines)
             if grid.path and len(grid.path) < constants.MAX_MOVES:
                 grid.draw_highlight(screen)
-            else:
+            elif grid.path and len(grid.path) >= constants.MAX_MOVES:
                 play_button.draw(screen)
             clock.tick(60)
 
