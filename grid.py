@@ -4,7 +4,6 @@ import constants
 import math
 
 
-
 class Grid:
     def __init__(self, size):
         self.size = size
@@ -16,8 +15,10 @@ class Grid:
         self.bullet_start_indices = []
         self.game_over = False
         self.winner = None
+        self.background_image = pygame.image.load("images/background.png")
+        self.scaled_background = pygame.transform.scale(self.background_image, (constants.SCREEN_SIZE, constants.SCREEN_SIZE))
 
-    def draw(self, surface, show_lines=True, current_path_index=None, computer_path=None):
+    def draw(self, surface, show_lines=True, current_path_index=None, computer_path=None, user_image=None):
         if self.winner:
             result_font = pygame.font.Font(None, 50)
             result_text = None
@@ -28,13 +29,18 @@ class Grid:
             text_rect = result_text.get_rect(center=(constants.SCREEN_SIZE // 2, constants.SCREEN_SIZE // 2))
             surface.blit(result_text, text_rect)
         else:
-            surface.fill(constants.WHITE)
+            # surface.fill(constants.WHITE)
+            surface.blit(self.scaled_background, (0, 0))
             for y in range(self.size):
                 for x in range(self.size):
+                    color = None
                     if current_path_index is not None and \
                             0 <= current_path_index < len(self.path) and \
                             (x, y) == self.path[current_path_index]:
-                        color = constants.RED
+                        if user_image:
+                            surface.blit(user_image, (x * constants.CELL_SIZE, y * constants.CELL_SIZE))
+                        else:
+                            color = constants.RED
                     elif self.grid[y][x] == 1:
                         if (x, y) == self.path[-1]:
                             color = (136, 8, 8)  # Slightly different shade of red
@@ -144,9 +150,17 @@ class Grid:
 
                 if bullet['x'] < 0 or bullet['x'] >= self.size or bullet['y'] < 0 or bullet['y'] >= self.size:
                     self.bullets.remove(bullet)
-                elif self.check_user_bullet_collision(computer_path[play_index][0], computer_path[play_index][1]):
-                    self.winner = "user"
-                    self.game_over = True
+                elif play_index < len(computer_path):
+                    if self.check_user_bullet_collision(computer_path[play_index][0], computer_path[play_index][1]):
+                        self.winner = "user"
+                        self.game_over = True
+
+                if self.bullet_at_position(self.computer_bullets, bullet['x'], bullet['y']):
+                    self.bullets.remove(bullet)
+                elif play_index < len(computer_path):
+                    if self.check_user_bullet_collision(computer_path[play_index][0], computer_path[play_index][1]):
+                        self.winner = "user"
+                        self.game_over = True
 
     def update_bullets_computer(self, user_path, play_index):
         if self.winner is None:
@@ -162,9 +176,17 @@ class Grid:
 
                 if bullet['x'] < 0 or bullet['x'] >= self.size or bullet['y'] < 0 or bullet['y'] >= self.size:
                     self.computer_bullets.remove(bullet)
-                elif self.check_computer_bullet_collision(user_path[play_index][0], user_path[play_index][1]):
-                    self.winner = "computer"
-                    self.game_over = True
+                elif play_index < len(user_path):
+                    if self.check_computer_bullet_collision(user_path[play_index][0], user_path[play_index][1]):
+                        self.winner = "computer"
+                        self.game_over = True
+
+                if self.bullet_at_position(self.bullets, bullet['x'], bullet['y']):
+                    self.computer_bullets.remove(bullet)
+                elif play_index < len(user_path):
+                    if self.check_computer_bullet_collision(user_path[play_index][0], user_path[play_index][1]):
+                        self.winner = "computer"
+                        self.game_over = True
 
     def get_direction_towards_user(self, x, y):
         if not self.path:
@@ -197,6 +219,12 @@ class Grid:
 
     def check_computer_bullet_collision(self, x, y):
         for bullet in self.computer_bullets:
+            if bullet['x'] == x and bullet['y'] == y:
+                return True
+        return False
+
+    def bullet_at_position(self, bullets, x, y):
+        for bullet in bullets:
             if bullet['x'] == x and bullet['y'] == y:
                 return True
         return False

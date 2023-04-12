@@ -34,17 +34,19 @@ def display_centered_texts(screen, texts, font_size, color, line_spacing=10):
     # Calculate the starting Y position for the first line of text
     start_y = (screen_height - total_text_height) // 2
 
+    pos_y = -1
+    text_height = -1
+
     for i, text in enumerate(texts):
         # Render the text and get its surface
         text_surface = font.render(text, True, color)
-
         # Calculate the position of the text
         text_width, text_height = text_surface.get_size()
         pos_x = (screen_width - text_width) // 2
         pos_y = start_y + i * (text_height + line_spacing)
-
         # Blit the text surface onto the screen
         screen.blit(text_surface, (pos_x, pos_y))
+    return pos_y + text_height
 
 
 # Main function
@@ -55,7 +57,7 @@ def main():
     screen_height = screen_info.current_h
 
     # Calculate the appropriate cell size
-    constants.CELL_SIZE = min(screen_width, screen_height) // constants.GRID_SIZE
+    # constants.CELL_SIZE = min(screen_width, screen_height) // constants.GRID_SIZE
     constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
 
     screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
@@ -76,7 +78,7 @@ def main():
     play_interval = 1000  # Time interval in milliseconds between path cells
 
     # Add a new state for the map selection screen
-    show_map_selection = True
+    show_map_selection = False
     map_selection_screen = MapSelectionScreen()
 
     shoot_event = pygame.USEREVENT + 2
@@ -84,6 +86,17 @@ def main():
 
     computer_player = ComputerPlayer(grid)
     screen_resized = False
+
+    show_instructions = True
+    instructions = ["Instruction 1", "Instruction 2", "Instruction 3"]
+    instruction_button = None
+
+    # Load and scale the user image in main.py
+    background_image = pygame.image.load("images/background.png")
+    user_image = pygame.image.load("images/user_2.png")
+    print(constants.CELL_SIZE)
+    print(constants.SCREEN_SIZE)
+    user_image = pygame.transform.scale(user_image, (constants.CELL_SIZE, constants.CELL_SIZE))
 
     while True:
         for event in pygame.event.get():
@@ -99,6 +112,11 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # Get mouse coordinates
                 x, y = pygame.mouse.get_pos()
+
+                if show_instructions and instruction_button.is_clicked(x, y):
+                    show_instructions = False
+                    show_map_selection = True
+                    print("something")
 
                 # Check if the play button is clicked
                 if play_button.is_clicked(x, y) and \
@@ -140,14 +158,6 @@ def main():
                         show_map_selection = False
                         print("Selected map:", selected_map)
 
-                        # draw_font = pygame.font.Font(None, 50)
-                        # draw_text = draw_font.render(f"Round 1 - {constants.MAX_MOVES} moves",
-                        #                              True, constants.BLACK)
-                        # text_rect = draw_text.get_rect(center=(constants.SCREEN_SIZE // 2, constants.SCREEN_SIZE // 2))
-                        # screen.blit(draw_text, text_rect)
-                        # pygame.display.flip()
-                        # pygame.time.wait(2000)  # Wait for 2 seconds (2000 ms)
-
             # Shoot bullet
             if event.type == pygame.KEYDOWN:
                 direction = None
@@ -163,8 +173,8 @@ def main():
                 if direction:
                     if \
                             play_mode and \
-                                    play_index > 0 and \
-                                    grid.fired_bullets[play_index - 1] is False:
+                            play_index > 0 and \
+                            grid.fired_bullets[play_index - 1] is False:
                         grid.shoot_bullet(direction, grid.path[play_index - 1], play_index)
                     elif not play_mode:
                         grid.shoot_bullet(direction)
@@ -197,7 +207,7 @@ def main():
             if event.type == pygame.VIDEORESIZE:
                 #screen_resized = True
                 width, height = event.w, event.h
-                constants.CELL_SIZE = min(width // constants.GRID_SIZE, height // constants.GRID_SIZE)
+                # constants.CELL_SIZE = min(width // constants.GRID_SIZE, height // constants.GRID_SIZE)
                 constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
                 screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
 
@@ -235,7 +245,15 @@ def main():
                 play_timer = 0
 
         # Update the screen
-        if show_map_selection:
+        if show_instructions:
+            scaled_background = pygame.transform.scale(background_image, (constants.SCREEN_SIZE, constants.SCREEN_SIZE))
+            screen.blit(scaled_background, (0, 0))
+            last_line_y = display_centered_texts(screen, instructions, font_size=50, color=constants.BLACK)
+            instruction_button_y = last_line_y + 20  # Add some space (20 pixels) between the last line and the button
+            instruction_button = Button((constants.SCREEN_SIZE - 150) // 2, instruction_button_y, 150, 40, "Continue",
+                                        (0, 128, 0), 30)
+            instruction_button.draw(screen)
+        elif show_map_selection:
             map_selection_screen.draw(screen)
         elif play_mode:
             if play_index < len(grid.path) and pygame.time.get_ticks() - play_timer > play_interval:
@@ -243,7 +261,7 @@ def main():
                 play_index += 1
 
             show_lines = False
-            grid.draw(screen, show_lines, play_index - 1, computer_player.path)
+            grid.draw(screen, show_lines, play_index - 1, computer_player.path, user_image)
 
             clock.tick(10)
         else:
