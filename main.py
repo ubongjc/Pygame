@@ -8,6 +8,8 @@ from map_selection_screen import MapSelectionScreen
 from button import Button
 from players.user_player import UserPlayer
 from players.computer_player import ComputerPlayer
+from game_mode_selection_screen import GameModeSelectionScreen
+
 
 # Initialize Pygame
 pygame.init()
@@ -61,7 +63,16 @@ def handle_map_selection(x, y, show_map_selection, map_selection_screen):
         if selected_map:
             show_map_selection = False
             print("Selected map:", selected_map)
-    return show_map_selection
+    return False
+
+
+def handle_game_mode_options_selection(x, y, show_game_mode_options, game_mode_selection_screen):
+    if show_game_mode_options:
+        selected_mode = game_mode_selection_screen.check_click(x, y)
+        if selected_mode:
+            show_game_mode_options = False
+            print("Selected mode:", selected_mode)
+    return show_game_mode_options, True
 
 
 def handle_bullet_shoot(event, play_mode, play_index, player):
@@ -229,11 +240,13 @@ def main():
     # Add a new state for the map selection screen
     show_map_selection = False
     map_selection_screen = MapSelectionScreen()
+    game_mode_selection_screen = GameModeSelectionScreen()  # Add this line
     shoot_event = pygame.USEREVENT + 2
     pygame.time.set_timer(shoot_event, random.randint(1000, 3000))
     show_instructions = True
     instructions = ["Instruction 1", "Instruction 2", "Instruction 3"]
     instruction_button = None
+    show_game_mode_options = False
 
     while True:
         for event in pygame.event.get():
@@ -246,12 +259,15 @@ def main():
             # Input handling
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
-                show_instructions, show_map_selection = \
+                show_instructions, show_game_mode_options = \
                     handle_instruction_button_click(show_instructions, instruction_button, x, y)
                 show_lines, play_mode, play_index, play_timer = \
                     handle_play_button_click(play_button, x, y, player, computer_player, play_mode, grid)
                 handle_path_editing(x, y, play_mode, player, computer_player, grid)
+                show_game_mode_options, show_map_selection = \
+                    handle_game_mode_options_selection(x, y, show_game_mode_options, game_mode_selection_screen)
                 show_map_selection = handle_map_selection(x, y, show_map_selection, map_selection_screen)
+                print(show_map_selection)
 
             handle_bullet_shoot(event, play_mode, play_index, player)
             handle_computer_shoot(event, play_mode, play_index, computer_player, player, shoot_event)
@@ -266,7 +282,10 @@ def main():
         # Update the screen
         if show_instructions:
             instruction_button = display_scaled_background_and_button(screen, background_image, instructions)
+        elif show_game_mode_options:
+            game_mode_selection_screen.draw(screen)
         elif show_map_selection:
+            print(f"wone {show_map_selection}")
             map_selection_screen.draw(screen)
         elif play_mode:
             play_index, play_timer, show_lines = \
