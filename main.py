@@ -3,11 +3,11 @@ import pygame
 import sys
 
 import constants
-from computer_player import ComputerPlayer
 from grid import Grid
-# from constants import *
 from map_selection_screen import MapSelectionScreen
 from button import Button
+from players.user_player import UserPlayer
+from players.computer_player import ComputerPlayer
 
 # Initialize Pygame
 pygame.init()
@@ -51,25 +51,24 @@ def display_centered_texts(screen, texts, font_size, color, line_spacing=10):
 
 # Main function
 def main():
-    # Get the user's screen size
-    screen_info = pygame.display.Info()
-    screen_width = screen_info.current_w
-    screen_height = screen_info.current_h
-
     # Calculate the appropriate cell size
-    # constants.CELL_SIZE = min(screen_width, screen_height) // constants.GRID_SIZE
     constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
-
     screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
     pygame.display.set_caption("Pygame Grid Game")
     clock = pygame.time.Clock()
-    bullet_update_event = pygame.USEREVENT + 1
-    pygame.time.set_timer(bullet_update_event, 500)  # Set the interval to 500ms
+    BULLET_UPDATE_EVENT = pygame.USEREVENT + 1
+    pygame.time.set_timer(BULLET_UPDATE_EVENT, 500)  # Set the interval to 500ms
 
-    grid = Grid(constants.GRID_SIZE)
-    grid.bullet_start_indices = []
+    # Load player and computer player images
+    player_image = "images/user_2.png"
+    computer_player_image = "images/user_2.png"
+    background_image = pygame.image.load("images/background.png")
+
+    player = UserPlayer(player_image, -1, -1)
+    computer_player = ComputerPlayer(computer_player_image, -1, -1)
+
+    grid = Grid(constants.GRID_SIZE, player, computer_player)
     show_lines = True
-
     play_button = draw_play_button()
 
     play_mode = False
@@ -84,19 +83,9 @@ def main():
     shoot_event = pygame.USEREVENT + 2
     pygame.time.set_timer(shoot_event, random.randint(1000, 3000))
 
-    computer_player = ComputerPlayer(grid)
-    screen_resized = False
-
     show_instructions = True
     instructions = ["Instruction 1", "Instruction 2", "Instruction 3"]
     instruction_button = None
-
-    # Load and scale the user image in main.py
-    background_image = pygame.image.load("images/background.png")
-    user_image = pygame.image.load("images/user_2.png")
-    print(constants.CELL_SIZE)
-    print(constants.SCREEN_SIZE)
-    user_image = pygame.transform.scale(user_image, (constants.CELL_SIZE, constants.CELL_SIZE))
 
     while True:
         for event in pygame.event.get():
@@ -104,9 +93,8 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-            if event.type == bullet_update_event:
-                grid.update_bullets(computer_player.path, play_index - 1)
-                grid.update_bullets_computer(grid.path, play_index - 1)
+            if event.type == BULLET_UPDATE_EVENT:
+                grid.update_bullets(play_index)
 
             # Input handling
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -120,11 +108,11 @@ def main():
 
                 # Check if the play button is clicked
                 if play_button.is_clicked(x, y) and \
-                        len(grid.path) >= constants.MAX_MOVES and \
+                        len(player.path) >= constants.MAX_MOVES and \
                         not play_mode:
 
                     print(f"Computer's selected path: {computer_player.path}\n len: {len(computer_player.path)}")
-                    print(f"user's selected path: {grid.path}\n len: {len(grid.path)}")
+                    print(f"user's selected path: {player.path}\n len: {len(player.path)}")
                     show_lines = False
                     grid.grid = [[0 for _ in range(constants.GRID_SIZE)] for _ in range(constants.GRID_SIZE)]
                     play_mode = True
@@ -136,21 +124,20 @@ def main():
                     cell_x, cell_y = x // constants.CELL_SIZE, y // constants.CELL_SIZE
 
                     # Toggle cell color
-
-                    if len(grid.path) < constants.MAX_MOVES and \
-                            grid.is_valid_move(cell_x, cell_y) and \
+                    if len(player.path) < constants.MAX_MOVES and \
+                            player.is_valid_move(cell_x, cell_y) and \
                             grid.grid[cell_y][cell_x] == 0:
                         grid.grid[cell_y][cell_x] = 1
-                        grid.path.append((cell_x, cell_y))
-                        grid.fired_bullets.append(False)
+                        player.path.append((cell_x, cell_y))
+                        player.fired_bullets.append(False)
 
-                    elif grid.path and (cell_x, cell_y) == grid.path[-1]:
+                    elif player.path and (cell_x, cell_y) == player.path[-1]:
                         grid.grid[cell_y][cell_x] = 0
-                        grid.path.pop()
+                        player.path.pop()
                         if len(computer_player.path) > 0:
                             computer_player.path.pop()
                             computer_player.fired_bullets.pop()
-                        grid.fired_bullets.pop()
+                        player.fired_bullets.pop()
 
                 if show_map_selection:
                     selected_map = map_selection_screen.check_click(x, y)
@@ -174,10 +161,8 @@ def main():
                     if \
                             play_mode and \
                             play_index > 0 and \
-                            grid.fired_bullets[play_index - 1] is False:
-                        grid.shoot_bullet(direction, grid.path[play_index - 1], play_index)
-                    elif not play_mode:
-                        grid.shoot_bullet(direction)
+                            player.fired_bullets[play_index - 1] is False:
+                        player.shoot_bullet(direction, current_path_index=play_index)
 
             if play_mode and \
                     play_index < len(computer_player.path) and \
@@ -188,11 +173,12 @@ def main():
                     shooter_y = computer_player.path[play_index - 1][1]
 
                     # Get the direction towards the user
-                    direction = grid.get_direction_towards_user(shooter_x, shooter_y)
+                    direction = computer_player.get_direction_towards_user(player.path, shooter_x, shooter_y)
 
                     # Shoot the bullet
-                    grid.shoot_bullet_computer(direction, start_pos=(shooter_x, shooter_y),
-                                               computer_player=computer_player)
+                    computer_player.shoot_bullet_computer(direction, current_path_index=play_index)
+                    # grid.shoot_bullet_computer(direction, start_pos=(shooter_x, shooter_y),
+                    #                            computer_player=computer_player)
                     # computer_player.fired_bullets[play_index-1] = True
 
                     # Reschedule the event with a random interval between 1 and 3 seconds
@@ -205,20 +191,11 @@ def main():
 
             # Resize the screen
             if event.type == pygame.VIDEORESIZE:
-                #screen_resized = True
-                width, height = event.w, event.h
-                # constants.CELL_SIZE = min(width // constants.GRID_SIZE, height // constants.GRID_SIZE)
                 constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
                 screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
 
-        # if screen_resized:
-        #     screen_resized = False
-        #     screen.fill(constants.WHITE)
-        #     grid.draw(screen)
-        #     pygame.display.flip()
-
         # reset game
-        if not grid.winner and play_index == len(grid.path) and \
+        if not grid.winner and play_index == len(player.path) and \
                 play_index > 0:
             # Display "Draw - Round 2" text
             round_number = 11 - (constants.MAX_BULLETS - 1)
@@ -237,8 +214,9 @@ def main():
                 constants.MAX_MOVES = constants.GRID_SIZE * 2
                 constants.MAX_BULLETS = constants.MAX_MOVES // 2
                 screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
-                grid = Grid(constants.GRID_SIZE)
-                computer_player = ComputerPlayer(grid)
+                player = UserPlayer(player_image, -1, -1)
+                computer_player = ComputerPlayer(computer_player_image, -1, -1)
+                grid = Grid(constants.GRID_SIZE, player, computer_player)
                 show_lines = True
                 play_mode = False
                 play_index = 0
@@ -256,19 +234,19 @@ def main():
         elif show_map_selection:
             map_selection_screen.draw(screen)
         elif play_mode:
-            if play_index < len(grid.path) and pygame.time.get_ticks() - play_timer > play_interval:
+            if play_index < len(player.path) and pygame.time.get_ticks() - play_timer > play_interval:
                 play_timer = pygame.time.get_ticks()
                 play_index += 1
 
             show_lines = False
-            grid.draw(screen, show_lines, play_index - 1, computer_player.path, user_image)
+            grid.draw(screen, show_lines, play_index - 1)
 
             clock.tick(10)
         else:
             grid.draw(screen, show_lines)
-            if grid.path and len(grid.path) < constants.MAX_MOVES:
+            if player.path and len(player.path) < constants.MAX_MOVES:
                 grid.draw_highlight(screen)
-            elif grid.path and len(grid.path) >= constants.MAX_MOVES:
+            elif player.path and len(player.path) >= constants.MAX_MOVES:
                 play_button = draw_play_button()
                 play_button.draw(screen)
             clock.tick(60)
