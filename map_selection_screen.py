@@ -26,6 +26,6 @@ class MapSelectionScreen:
     def check_click(self, x, y):
         for button in self.buttons:
             if button.is_clicked(x, y):
-                return button.text
-        return None
+                return True, button.text
+        return False, None
 

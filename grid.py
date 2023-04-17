@@ -18,7 +18,8 @@ class Grid:
         if self.winner:
             self.display_result_text(surface)
         else:
-            surface.blit(self.scaled_background, (0, 0))
+            # surface.blit(self.scaled_background, (0, 0))
+            surface.fill(constants.WHITE)
             self.draw_grid_cells(surface, show_lines)
             self.update_player_position(current_path_index)
             self.update_computer_player_position(current_path_index)

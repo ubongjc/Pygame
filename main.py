@@ -5,6 +5,7 @@ import constants
 
 from grid import Grid
 from map_selection_screen import MapSelectionScreen
+from game_mode_selection_screen import GameModeSelectionScreen
 from button import Button
 from players.user_player import UserPlayer
 from players.computer_player import ComputerPlayer
@@ -25,7 +26,7 @@ def draw_play_button():
 def handle_instruction_button_click(show_instructions, instruction_button, x, y):
     if show_instructions and instruction_button.is_clicked(x, y):
         return False, True
-    return show_instructions, False
+    return True, False
 
 
 def handle_play_button_click(play_button, x, y, player, computer_player, play_mode, grid):
@@ -37,7 +38,15 @@ def handle_play_button_click(play_button, x, y, player, computer_player, play_mo
     return True, play_mode, -1, -1
 
 
-def handle_path_editing(x, y, play_mode, player, computer_player, grid):
+def handle_game_mode_selection(x, y, show_game_mode_selection, game_mode_selection_screen):
+    if show_game_mode_selection:
+        selected, selected_mode = game_mode_selection_screen.check_click(x, y)
+        if selected and selected_mode:
+            return False, True, False
+    return True, False, False
+
+
+def handle_path_editing(x, y, play_mode, player, grid):
     if not play_mode:
         cell_x, cell_y = x // constants.CELL_SIZE, y // constants.CELL_SIZE
         if len(player.path) < constants.MAX_MOVES and \
@@ -54,11 +63,10 @@ def handle_path_editing(x, y, play_mode, player, computer_player, grid):
 
 def handle_map_selection(x, y, show_map_selection, map_selection_screen):
     if show_map_selection:
-        selected_map = map_selection_screen.check_click(x, y)
-        if selected_map:
-            show_map_selection = False
-            print("Selected map:", selected_map)
-    return show_map_selection
+        selected, selected_map = map_selection_screen.check_click(x, y)
+        if selected and selected_map:
+            return False, False
+    return True, False
 
 
 def handle_bullet_shoot(event, play_mode, play_index, player):
@@ -103,7 +111,7 @@ def toggle_grid_lines(event, show_lines):
 def resize_screen(event, screen):
     if event.type == pygame.VIDEORESIZE:
         constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
-        screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
+        screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE))
     return screen
 
 
@@ -205,16 +213,17 @@ def handle_quit_event(event):
 def main():
     # Calculate the appropriate cell size
     constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
-    screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE), pygame.RESIZABLE)
+    screen = pygame.display.set_mode((constants.SCREEN_SIZE, constants.SCREEN_SIZE))
     pygame.display.set_caption("Pygame Grid Game")
     clock = pygame.time.Clock()
     bullet_update_event = pygame.USEREVENT + 1
     pygame.time.set_timer(bullet_update_event, 500)  # Set the interval to 500ms
     # Load player and computer player images
     player_image = "images/user_2.png"
-    computer_player_image = "images/user_2.png"
+    computer_player_image = "images/user_1.png"
     background_image = pygame.image.load("images/background.png")
     player = UserPlayer(player_image, -1, -1)
+    player2 = UserPlayer(player_image, -1, -1)
     computer_player = ComputerPlayer(computer_player_image, -1, -1)
     grid = Grid(constants.GRID_SIZE, player, computer_player)
     show_lines = True
@@ -231,6 +240,8 @@ def main():
     show_instructions = True
     instructions = ["Instruction 1", "Instruction 2", "Instruction 3"]
     instruction_button = None
+    show_game_mode_selection = False
+    game_mode_selection_screen = GameModeSelectionScreen()
 
     while True:
         for event in pygame.event.get():
@@ -243,12 +254,24 @@ def main():
             # Input handling
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
-                show_instructions, show_map_selection = \
-                    handle_instruction_button_click(show_instructions, instruction_button, x, y)
+
+                if show_instructions:
+                    show_instructions, show_game_mode_selection = \
+                        handle_instruction_button_click(show_instructions, instruction_button, x, y)
+
                 show_lines, play_mode, play_index, play_timer = \
                     handle_play_button_click(play_button, x, y, player, computer_player, play_mode, grid)
-                handle_path_editing(x, y, play_mode, player, computer_player, grid)
-                show_map_selection = handle_map_selection(x, y, show_map_selection, map_selection_screen)
+
+                if not show_instructions and not show_game_mode_selection and not show_map_selection:
+                    handle_path_editing(x, y, play_mode, player, grid)
+
+                if show_instructions is False and show_game_mode_selection:
+                    show_game_mode_selection, show_map_selection, show_instructions = \
+                        handle_game_mode_selection(x, y, show_game_mode_selection, game_mode_selection_screen)
+
+                if show_game_mode_selection is False and show_map_selection:
+                    show_map_selection, show_game_mode_selection = \
+                        handle_map_selection(x, y, show_map_selection, map_selection_screen)
 
             handle_bullet_shoot(event, play_mode, play_index, player)
             handle_computer_shoot(event, play_mode, play_index, computer_player, player, shoot_event)
@@ -263,6 +286,8 @@ def main():
         # Update the screen
         if show_instructions:
             instruction_button = display_scaled_background_and_button(screen, background_image, instructions)
+        elif show_game_mode_selection:
+            game_mode_selection_screen.draw(screen)
         elif show_map_selection:
             map_selection_screen.draw(screen)
         elif play_mode:
