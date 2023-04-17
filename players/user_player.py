@@ -41,7 +41,7 @@ class UserPlayer(pygame.sprite.Sprite):
         if current_path_index != -1:
             self.fired_bullets[current_path_index - 1] = True
 
-    def update_user_bullets(self, computer_player, play_index):
+    def update_user_bullets(self, computer_player, player, play_index):
         for bullet in self.bullets:
             if bullet['direction'] == 'left':
                 bullet['x'] -= 1
@@ -56,15 +56,26 @@ class UserPlayer(pygame.sprite.Sprite):
                     bullet['y'] >= constants.GRID_SIZE:
                 self.bullets.remove(bullet)
                 return False
-            elif play_index < len(computer_player.path):
+            elif player and play_index < len(player.path):
+                if self.check_user_bullet_collision(player.path[play_index][0],
+                                                    player.path[play_index][1]):
+                    return True
+            elif computer_player and not player and play_index < len(computer_player.path):
                 if self.check_user_bullet_collision(computer_player.path[play_index][0],
                                                     computer_player.path[play_index][1]):
                     return True
 
-            if self.bullet_at_position(computer_player, bullet['x'], bullet['y']):
+            if not player and self.bullet_at_position(computer_player, bullet['x'], bullet['y']):
                 self.bullets.remove(bullet)
                 return False
-            elif play_index < len(computer_player.path):
+            elif player and self.bullet_at_position(player, bullet['x'], bullet['y']):
+                self.bullets.remove(bullet)
+                return False
+            elif player and play_index < len(player.path):
+                if self.check_user_bullet_collision(player.path[play_index][0],
+                                                    player.path[play_index][1]):
+                    return True
+            elif computer_player and not player and play_index < len(computer_player.path):
                 if self.check_user_bullet_collision(computer_player.path[play_index][0],
                                                     computer_player.path[play_index][1]):
                     return True
@@ -75,8 +86,8 @@ class UserPlayer(pygame.sprite.Sprite):
                 return True
         return False
 
-    def bullet_at_position(self, computer_player, x, y):
-        for bullet in computer_player.bullets:
+    def bullet_at_position(self, player, x, y):
+        for bullet in player.bullets:
             if bullet['x'] == x and bullet['y'] == y:
                 return True
         return False
