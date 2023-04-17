@@ -70,7 +70,7 @@ class Grid:
             result_text = result_font.render("Player 1 Wins!", True, constants.BLACK)
         elif self.winner == "Player 2":
             result_text = result_font.render("Player 2 Wins!", True, constants.BLACK)
-        elif self.winner == "computer":
+        elif self.winner == "Computer":
             result_text = result_font.render("Game Over", True, constants.BLACK)
         text_rect = result_text.get_rect(center=(constants.SCREEN_SIZE // 2, constants.SCREEN_SIZE // 2))
         surface.blit(result_text, text_rect)
