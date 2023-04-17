@@ -49,9 +49,6 @@ def handle_path_editing(x, y, play_mode, player, computer_player, grid):
         elif player.path and (cell_x, cell_y) == player.path[-1]:
             grid.grid[cell_y][cell_x] = 0
             player.path.pop()
-            if len(computer_player.path) > 0:
-                computer_player.path.pop()
-                computer_player.fired_bullets.pop()
             player.fired_bullets.pop()
 
 
