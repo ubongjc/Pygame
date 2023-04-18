@@ -273,7 +273,7 @@ def display_scaled_background_and_button(screen, background_image, instructions)
     scaled_background = pygame.transform.scale(background_image, (constants.SCREEN_SIZE, constants.SCREEN_SIZE))
     # screen.blit(scaled_background, (0, 0))
     screen.fill(constants.WHITE)
-    last_line_y = display_centered_texts(screen, instructions, font_size=50, color=constants.BLACK)
+    last_line_y = display_centered_texts(screen, instructions, font_size=26, color=constants.BLACK)
     instruction_button_y = last_line_y + 20  # Add some space (20 pixels) between the last line and the button
     instruction_button = Button((constants.SCREEN_SIZE - 150) // 2, instruction_button_y, 150, 40, "Continue",
                                 (0, 128, 0), 30)
@@ -340,7 +340,14 @@ def main():
     shoot_event = pygame.USEREVENT + 2
     pygame.time.set_timer(shoot_event, random.randint(1000, 3000))
     show_instructions = True
-    instructions = ["Instruction 1", "Instruction 2", "Instruction 3"]
+    instructions = ["INSTRUCTIONS:", "1. Each player selects their path by clicking adjacent squares.",
+                                     "2. Click PLAY!",
+                                     "3. Use the direction buttons to shoot at your opponent.",
+                                     "(UP - DOWN - LEFT - RIGHT for Player 1)",
+                                     "(W     -     S     -     A     -     D for Player 2)",
+                                     "4. If the game is tied, the board shrinks in size until a winner emerges!",
+                                     "",
+                                     "Goodluck to the Battlers!"]
     instruction_button = None
     replay_button = None
     show_game_mode_selection = False
