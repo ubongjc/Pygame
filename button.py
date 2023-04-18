@@ -13,11 +13,11 @@ class Button:
         self.text = text
         self.color = constants.BUTTON_COLOR
         self.font_size = font_size
+        self.font = pygame.font.Font("fonts/Mister Pixel Regular.otf", 16)
 
     def draw(self, surface):
         pygame.draw.rect(surface, self.color, (self.x, self.y, self.width, self.height))
-        font = pygame.font.Font(None, self.font_size)
-        text = font.render(self.text, True, constants.BUTTON_TEXT_COLOR)
+        text = self.font.render(self.text, True, constants.BUTTON_TEXT_COLOR)
         text_rect = text.get_rect(center=(self.x + self.width // 2, self.y + self.height // 2))
         surface.blit(text, text_rect)
 

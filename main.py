@@ -239,7 +239,7 @@ def reset_game(screen, player, player2, computer_player, grid, player_image, com
             f"{constants.MAX_MOVES - 2} moves",
         ]
 
-        display_centered_texts(screen, texts, font_size=26, color=constants.BLACK)
+        display_centered_texts(screen, texts, font_size=15, color=constants.BLACK)
         pygame.display.flip()
         pygame.time.wait(delay)  # Wait for 2(4) seconds
 
@@ -309,7 +309,7 @@ def display_scaled_background_and_button(screen, background_image, instructions)
     scaled_background = pygame.transform.scale(background_image, (constants.SCREEN_SIZE, constants.SCREEN_SIZE))
     screen.blit(background_image, (0, 0))
     # screen.fill(constants.WHITE)
-    last_line_y = display_centered_texts(screen, instructions, font_size=22, color=constants.BLACK)
+    last_line_y = display_centered_texts(screen, instructions, font_size=15, color=constants.BLACK)
     instruction_button_y = last_line_y + 20  # Add some space (20 pixels) between the last line and the button
     instruction_button = Button((constants.SCREEN_SIZE - 150) // 2, instruction_button_y, 150, 40, "Continue",
                                 (0, 128, 0), 30)
@@ -327,7 +327,7 @@ def display_intro_background_and_button(screen, intro_image):
 def display_centered_texts(screen, texts, font_size, color, line_spacing=10):
     screen_width, screen_height = screen.get_size()
     # Create a font object
-    font = pygame.font.Font(None, font_size)
+    font = pygame.font.Font("fonts/Mister Pixel Regular.otf", font_size)
     # Calculate the total height of all lines of text
     total_text_height = len(texts) * font.get_height() + (len(texts) - 1) * line_spacing
     # Calculate the starting Y position for the first line of text
