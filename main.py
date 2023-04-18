@@ -355,7 +355,6 @@ def main():
             if event.type == bullet_update_event:
                 grid.update_bullets(play_index)
 
-            # Input handling
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
 
