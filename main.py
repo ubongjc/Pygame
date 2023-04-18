@@ -47,6 +47,18 @@ def handle_instruction_button_click(show_instructions, instruction_button, x, y)
     return True, False
 
 
+def handle_intro_button_click(show_intro, intro_button, x, y):
+    if show_intro and intro_button.is_clicked(x, y):
+        return False, True
+    return True, False
+
+
+def handle_replay_button_click(show_button, x, y):
+    if show_button and show_button.is_clicked(x, y):
+        return True
+    return False
+
+
 def handle_play_button_click(play_button, x, y, player, player2, computer_player, play_mode, grid):
     if play_button and play_button.is_clicked(x, y) and len(player.path) >= constants.MAX_MOVES and \
             not player2 and not play_mode:
@@ -66,6 +78,8 @@ def handle_play_button_click(play_button, x, y, player, player2, computer_player
         return False, True, 0, pygame.time.get_ticks()
     return True, play_mode, -1, -1
 
+# def handle_replay_button_clicked(replay_button, x, y, ):
+
 
 def handle_next_button_click(next_button, x, y, player, computer_player, play_mode):
     if next_button and next_button.is_clicked(x, y) and len(player.path) >= constants.MAX_MOVES and not play_mode:
@@ -79,7 +93,7 @@ def handle_game_mode_selection(x, y, show_game_mode_selection, game_mode_selecti
     if show_game_mode_selection:
         selected, selected_mode = game_mode_selection_screen.check_click(x, y)
         if selected and selected_mode:
-            return False, True, False, selected_mode
+            return False, False, False, selected_mode
     return True, False, False, None
 
 
@@ -183,9 +197,12 @@ def resize_screen(event, screen):
 
 
 def update_grid_and_screen(screen, player, player2, computer_player, grid, player_image, computer_player_image,
-                           show_lines, play_mode, play_index, play_timer):
-    if constants.GRID_SIZE > 5:
+                           show_lines, play_mode, play_index, play_timer, replay_clicked, play_button, replay_button):
+    if constants.GRID_SIZE == 6:
+        constants.GRID_SIZE = 11
+    if not replay_clicked:
         constants.GRID_SIZE -= 1
+    if constants.GRID_SIZE > 5:
         constants.SCREEN_SIZE = constants.GRID_SIZE * constants.CELL_SIZE
         constants.MAX_MOVES = constants.GRID_SIZE * 2
         constants.MAX_BULLETS = constants.MAX_MOVES // 2
@@ -195,27 +212,45 @@ def update_grid_and_screen(screen, player, player2, computer_player, grid, playe
         computer_player = ComputerPlayer(computer_player_image, -1, -1)
         grid = Grid(constants.GRID_SIZE, player, player2, computer_player)
         show_lines = True
+        play_button = None
         play_mode = False
         play_index = 0
         play_timer = 0
-    return screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer
+        replay_button = None
+        replay_clicked = False
+
+    return screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer, \
+        replay_clicked, play_button, replay_button
 
 
 def reset_game(screen, player, player2, computer_player, grid, player_image, computer_player_image, show_lines,
-               play_mode, play_index, play_timer):
+               play_mode, play_index, play_timer, replay_clicked, play_button, replay_button):
     if not grid.winner and play_index == len(player.path) and play_index > 0:
         round_number = 11 - (constants.MAX_BULLETS - 1)
+        txt = ""
+        delay = 2000
+        if constants.GRID_SIZE == 6:
+            txt = "There was no winner"
+            round_number = 1
+            delay = 4000
         texts = [
+            txt,
             f"Draw - Round {round_number}",
-            f"{constants.MAX_MOVES - 2} moves"
+            f"{constants.MAX_MOVES - 2} moves",
         ]
-        display_centered_texts(screen, texts, font_size=50, color=constants.BLACK)
+
+        display_centered_texts(screen, texts, font_size=26, color=constants.BLACK)
         pygame.display.flip()
-        pygame.time.wait(2000)  # Wait for 2 seconds (2000 ms)
-        screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer = \
-            update_grid_and_screen(screen, player, player2, computer_player, grid, player_image, computer_player_image,
-                                   show_lines, play_mode, play_index, play_timer)
-    return screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer
+        pygame.time.wait(delay)  # Wait for 2(4) seconds
+
+        screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer, \
+            replay_clicked, play_button, replay_button = \
+            update_grid_and_screen(screen, player, player2, computer_player, grid, player_image,
+                                   computer_player_image,
+                                   show_lines, play_mode, play_index, play_timer, replay_clicked, play_button,
+                                   replay_button)
+    return screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer, \
+        replay_clicked, play_button, replay_button
 
 
 def update_play_index_and_draw_grid(screen, grid, play_index, play_timer, play_interval, clock, player, background_image):
@@ -241,6 +276,7 @@ def display_result_text(grid, screen):
     replay_button_y = last_line_y + 20  # Add some space (20 pixels) between the last line and the button
     replay_button = Button((constants.SCREEN_SIZE - 150) // 2, replay_button_y, 150, 40, "Play Again", (0, 128, 0), 30)
     replay_button.draw(screen)
+    return replay_button
 
 
 def draw_game_elements(screen, grid, player, player2, show_lines, clock, selected_game_mode, background_image):
@@ -271,14 +307,21 @@ def draw_game_elements(screen, grid, player, player2, show_lines, clock, selecte
 
 def display_scaled_background_and_button(screen, background_image, instructions):
     scaled_background = pygame.transform.scale(background_image, (constants.SCREEN_SIZE, constants.SCREEN_SIZE))
-    # screen.blit(scaled_background, (0, 0))
-    screen.fill(constants.WHITE)
-    last_line_y = display_centered_texts(screen, instructions, font_size=50, color=constants.BLACK)
+    screen.blit(background_image, (0, 0))
+    # screen.fill(constants.WHITE)
+    last_line_y = display_centered_texts(screen, instructions, font_size=22, color=constants.BLACK)
     instruction_button_y = last_line_y + 20  # Add some space (20 pixels) between the last line and the button
     instruction_button = Button((constants.SCREEN_SIZE - 150) // 2, instruction_button_y, 150, 40, "Continue",
                                 (0, 128, 0), 30)
     instruction_button.draw(screen)
     return instruction_button
+
+
+def display_intro_background_and_button(screen, intro_image):
+    screen.blit(intro_image, (0, 0))
+    intro_button = Button((constants.SCREEN_SIZE - 150) // 2, 360, 150, 40, "START", (0, 128, 0), 30)
+    intro_button.draw(screen)
+    return intro_button
 
 
 def display_centered_texts(screen, texts, font_size, color, line_spacing=10):
@@ -323,6 +366,7 @@ def main():
     player_image = "images/user_2.png"
     computer_player_image = "images/user_1.png"
     background_image = pygame.image.load("images/background_playmode.png")
+    intro_image = pygame.image.load("images/intro.png")
     player = UserPlayer(player_image, -1, -1)
     player2 = None
     computer_player = ComputerPlayer("images/user_1.png", -1, -1)
@@ -339,13 +383,23 @@ def main():
     map_selection_screen = MapSelectionScreen()
     shoot_event = pygame.USEREVENT + 2
     pygame.time.set_timer(shoot_event, random.randint(1000, 3000))
-    show_instructions = True
-    instructions = ["Instruction 1", "Instruction 2", "Instruction 3"]
+    show_instructions = False
+    instructions = ["INSTRUCTIONS:", "1. Each player selects their path by clicking adjacent squares.",
+                    "2. Click PLAY!",
+                    "3. Use the direction buttons to shoot at your opponent.",
+                    "(UP - DOWN - LEFT - RIGHT for Player 1)",
+                    "(W     -     S     -     A     -     D for Player 2)",
+                    "4. If the game is tied, the board shrinks in size until a winner emerges!",
+                    "",
+                    "Goodluck to the Battlers!"]
     instruction_button = None
     replay_button = None
+    replay_clicked = False
     show_game_mode_selection = False
     selected_game_mode = None
     game_mode_selection_screen = GameModeSelectionScreen()
+    show_intro = True
+    intro_button = None
 
     while True:
         for event in pygame.event.get():
@@ -358,7 +412,14 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
 
-                if show_instructions:
+                if replay_button:
+                    replay_clicked = handle_replay_button_click(replay_button, x, y)
+
+                if show_intro:
+                    show_intro, show_instructions = \
+                        handle_intro_button_click(show_intro, intro_button, x, y)
+
+                if show_instructions and instruction_button:
                     show_instructions, show_game_mode_selection = \
                         handle_instruction_button_click(show_instructions, instruction_button, x, y)
 
@@ -389,20 +450,34 @@ def main():
             screen = resize_screen(event, screen)
 
         if grid and grid.winner:
-            display_result_text(grid, screen)
+            replay_button = display_result_text(grid, screen)
+
+        if replay_clicked:
+            screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer, \
+                replay_clicked, play_button, replay_button = \
+                update_grid_and_screen(screen, player, player2, computer_player, grid, player_image,
+                                       computer_player_image,
+                                       show_lines, play_mode, play_index, play_timer, replay_clicked, play_button,
+                                       replay_button)
+
         # reset game
-        screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer = \
+        screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer, replay_clicked, \
+            play_button, replay_button = \
             reset_game(screen, player, player2, computer_player, grid, player_image, computer_player_image, show_lines,
-                       play_mode, play_index, play_timer)
+                       play_mode, play_index, play_timer, replay_clicked, play_button, replay_button)
 
         # Update the screen
-        if show_instructions:
+        if show_intro:
+            intro_button = display_intro_background_and_button(screen, intro_image)
+        elif show_instructions:
             instruction_button = display_scaled_background_and_button(screen, background_image, instructions)
         elif show_game_mode_selection:
             game_mode_selection_screen.draw(screen)
-        elif show_map_selection:
-            map_selection_screen.draw(screen)
+        # elif show_map_selection:
+        #     map_selection_screen.draw(screen)
         elif play_mode:
+            play_button = None
+            next_button = None
             background_image = pygame.image.load("images/background_playmode.png")
             play_index, play_timer, show_lines = \
                 update_play_index_and_draw_grid(screen, grid, play_index, play_timer, play_interval, clock, player,

@@ -9,6 +9,7 @@ class GameModeSelectionScreen:
     def __init__(self):
         self.game_modes = ["Single Player", "Two Players"]
         self.buttons = []
+        self.background_image = pygame.image.load("images/background_playmode.png")
         self.create_buttons()
 
     def create_buttons(self):
@@ -25,7 +26,7 @@ class GameModeSelectionScreen:
             self.buttons.append(button)
 
     def draw(self, surface):
-        surface.fill(constants.WHITE)
+        surface.blit(self.background_image, (0, 0))
         for button in self.buttons:
             button.draw(surface)
 
