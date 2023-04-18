@@ -8,19 +8,17 @@ class Grid:
         self.grid = [[[0, 0] for _ in range(size)] for _ in range(size)]
         self.game_over = False
         self.winner = None
-        self.background_image = pygame.image.load("images/background.png")
+        self.background_image = pygame.image.load("images/background_playmode.png")
         self.scaled_background = pygame.transform.scale(self.background_image,
                                                         (constants.SCREEN_SIZE, constants.SCREEN_SIZE))
         self.player = user_player
         self.player2 = user_player2
         self.computer_player = computer_player
 
-    def draw(self, surface, show_lines=True, current_path_index=None):
-        if self.winner:
-            self.display_result_text(surface)
-        else:
-            # surface.blit(self.scaled_background, (0, 0))
-            surface.fill(constants.WHITE)
+    def draw(self, surface, background_image, show_lines=True, current_path_index=None):
+        if not self.winner:
+            surface.blit(background_image, (0, 0))
+            # surface.fill(constants.WHITE)
             self.draw_grid_cells(surface, show_lines)
             self.update_player1_position(current_path_index)
             self.update_player2_position(current_path_index)
@@ -63,18 +61,6 @@ class Grid:
             if self.game_over:
                 self.winner = "Computer"
 
-    def display_result_text(self, surface):
-        result_font = pygame.font.Font(None, 50)
-        result_text = None
-        if self.winner == "Player 1":
-            result_text = result_font.render("Player 1 Wins!", True, constants.BLACK)
-        elif self.winner == "Player 2":
-            result_text = result_font.render("Player 2 Wins!", True, constants.BLACK)
-        elif self.winner == "Computer":
-            result_text = result_font.render("Game Over", True, constants.BLACK)
-        text_rect = result_text.get_rect(center=(constants.SCREEN_SIZE // 2, constants.SCREEN_SIZE // 2))
-        surface.blit(result_text, text_rect)
-
     def draw_grid_cells(self, surface, show_lines):
         for y in range(self.size):
             for x in range(self.size):
@@ -94,9 +80,9 @@ class Grid:
                 if color:
                     pygame.draw.rect(surface, color, (x * constants.CELL_SIZE, y * constants.CELL_SIZE,
                                                       constants.CELL_SIZE, constants.CELL_SIZE))
-                if show_lines:
-                    pygame.draw.rect(surface, constants.GREY, (x * constants.CELL_SIZE, y * constants.CELL_SIZE,
-                                                               constants.CELL_SIZE, constants.CELL_SIZE), 1)
+                # if show_lines:
+                #     pygame.draw.rect(surface, constants.GREY, (x * constants.CELL_SIZE, y * constants.CELL_SIZE,
+                #                                                constants.CELL_SIZE, constants.CELL_SIZE), 1)
 
     def update_player1_position(self, current_path_index):
         if current_path_index is not None and 0 <= current_path_index < len(self.player.path):

@@ -18,8 +18,8 @@ def draw_play_button():
     # play button
     button_width = 100
     button_height = 40
-    button_x = (constants.SCREEN_SIZE - button_width) // 2  # Calculate the center x position
-    button_y = (constants.SCREEN_SIZE - button_height) // 2  # Calculate the center y position
+    button_x = (constants.SCREEN_SIZE - button_width) // 2
+    button_y = (constants.SCREEN_SIZE - button_height) // 2
     return Button(button_x, button_y, button_width, button_height, "Play", (0, 128, 0), 30)
 
 
@@ -27,9 +27,18 @@ def draw_next_button():
     # next button
     button_width = 100
     button_height = 40
-    button_x = (constants.SCREEN_SIZE - button_width) // 2  # Calculate the center x position
-    button_y = (constants.SCREEN_SIZE - button_height) // 2  # Calculate the center y position
+    button_x = (constants.SCREEN_SIZE - button_width) // 2
+    button_y = (constants.SCREEN_SIZE - button_height) // 2
     return Button(button_x, button_y, button_width, button_height, "Next", (0, 128, 0), 30)
+
+
+def draw_again_button():
+    # next button
+    button_width = 100
+    button_height = 40
+    button_x = (constants.SCREEN_SIZE - button_width) // 2
+    button_y = (constants.SCREEN_SIZE - button_height) // 2
+    return Button(button_x, button_y, button_width, button_height, "Play Again", (0, 128, 0), 30)
 
 
 def handle_instruction_button_click(show_instructions, instruction_button, x, y):
@@ -209,17 +218,33 @@ def reset_game(screen, player, player2, computer_player, grid, player_image, com
     return screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer
 
 
-def update_play_index_and_draw_grid(screen, grid, play_index, play_timer, play_interval, clock, player):
+def update_play_index_and_draw_grid(screen, grid, play_index, play_timer, play_interval, clock, player, background_image):
     if play_index < len(player.path) and pygame.time.get_ticks() - play_timer > play_interval:
         play_timer = pygame.time.get_ticks()
         play_index += 1
-    grid.draw(screen, False, play_index - 1)
+    grid.draw(screen, background_image, False, play_index - 1)
     clock.tick(10)
     return play_index, play_timer, False
 
 
-def draw_game_elements(screen, grid, player, player2, show_lines, clock, selected_game_mode):
-    grid.draw(screen, show_lines)
+def display_result_text(grid, screen):
+    result_text = None
+    if grid.winner == "Player 1":
+        result_text = "Player 1 Wins!"
+    elif grid.winner == "Player 2":
+        result_text = "Player 2 Wins!"
+    elif grid.winner == "Computer":
+        result_text = "Game Over"
+
+    txt = [result_text]
+    last_line_y = display_centered_texts(screen, txt, font_size=50, color=constants.BLACK)
+    replay_button_y = last_line_y + 20  # Add some space (20 pixels) between the last line and the button
+    replay_button = Button((constants.SCREEN_SIZE - 150) // 2, replay_button_y, 150, 40, "Play Again", (0, 128, 0), 30)
+    replay_button.draw(screen)
+
+
+def draw_game_elements(screen, grid, player, player2, show_lines, clock, selected_game_mode, background_image):
+    grid.draw(screen, background_image, show_lines)
     if selected_game_mode == "Single Player":
         if player.path and len(player.path) < constants.MAX_MOVES:
             grid.draw_highlight(screen)
@@ -246,7 +271,8 @@ def draw_game_elements(screen, grid, player, player2, show_lines, clock, selecte
 
 def display_scaled_background_and_button(screen, background_image, instructions):
     scaled_background = pygame.transform.scale(background_image, (constants.SCREEN_SIZE, constants.SCREEN_SIZE))
-    screen.blit(scaled_background, (0, 0))
+    # screen.blit(scaled_background, (0, 0))
+    screen.fill(constants.WHITE)
     last_line_y = display_centered_texts(screen, instructions, font_size=50, color=constants.BLACK)
     instruction_button_y = last_line_y + 20  # Add some space (20 pixels) between the last line and the button
     instruction_button = Button((constants.SCREEN_SIZE - 150) // 2, instruction_button_y, 150, 40, "Continue",
@@ -296,7 +322,7 @@ def main():
     # Load player and computer player images
     player_image = "images/user_2.png"
     computer_player_image = "images/user_1.png"
-    background_image = pygame.image.load("images/background.png")
+    background_image = pygame.image.load("images/background_playmode.png")
     player = UserPlayer(player_image, -1, -1)
     player2 = None
     computer_player = ComputerPlayer("images/user_1.png", -1, -1)
@@ -316,6 +342,7 @@ def main():
     show_instructions = True
     instructions = ["Instruction 1", "Instruction 2", "Instruction 3"]
     instruction_button = None
+    replay_button = None
     show_game_mode_selection = False
     selected_game_mode = None
     game_mode_selection_screen = GameModeSelectionScreen()
@@ -362,6 +389,8 @@ def main():
             show_lines = toggle_grid_lines(event, show_lines)
             screen = resize_screen(event, screen)
 
+        if grid and grid.winner:
+            display_result_text(grid, screen)
         # reset game
         screen, player, player2, computer_player, grid, show_lines, play_mode, play_index, play_timer = \
             reset_game(screen, player, player2, computer_player, grid, player_image, computer_player_image, show_lines,
@@ -375,11 +404,14 @@ def main():
         elif show_map_selection:
             map_selection_screen.draw(screen)
         elif play_mode:
+            background_image = pygame.image.load("images/background_playmode.png")
             play_index, play_timer, show_lines = \
-                update_play_index_and_draw_grid(screen, grid, play_index, play_timer, play_interval, clock, player)
+                update_play_index_and_draw_grid(screen, grid, play_index, play_timer, play_interval, clock, player,
+                                                background_image)
         else:
+            background_image = pygame.image.load("images/background_not_playmode.png")
             play_button, next_button = \
-                draw_game_elements(screen, grid, player, player2, show_lines, clock, selected_game_mode)
+                draw_game_elements(screen, grid, player, player2, show_lines, clock, selected_game_mode, background_image)
 
         pygame.display.flip()
 
